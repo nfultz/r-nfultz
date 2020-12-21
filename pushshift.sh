@@ -25,7 +25,7 @@ do
     if test $(jq '.data|length' $OUT) -eq 100 ;
     then
       last=$(jq '.data[-1].created_utc' $OUT)
-      OUT=data/$YYYY-$MM.2.json 
+      OUT=data/$YYYY-$MM.2.json
       if ! test -f $OUT ;
       then
         echo Getting $YYYY-$MM page 2 after $last
