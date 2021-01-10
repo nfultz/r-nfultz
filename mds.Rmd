@@ -1,0 +1,131 @@
+---
+title: "Neal News / Reddit crossposting "
+output: html_notebook
+---
+
+```{r}
+library(jsonlite)
+
+```
+
+```{r}
+
+df <- stream_in(pipe("find duplicates -name '*.json' -exec jq -c '.[].data.children[].data | {subreddit, created, url} ' {} +"))
+
+```
+
+
+
+```{r}
+
+SR <- unique(df$subreddit)
+P <- length(SR)
+
+X <- matrix(NA_real_, P, P, dimnames = list(SR, SR))
+
+for(this in SR) {
+
+  this_df <- merge(subset(df, subreddit == this, created:url), 
+                   subset(df, subreddit != this), 
+                   by="url")
+ 
+  time_deltas <- (1/60 * 1/60) * tapply(this_df$created.x - this_df$created.y, this_df$subreddit, median)
+  
+  X[this, names(time_deltas)] <- time_deltas
+  
+}
+
+```
+
+
+
+```{r}
+
+X[is.na(X)] <- Inf
+
+noisolates <- names(which(table(df$subreddit) > 1))
+
+Xp <- X[noisolates, noisolates]
+
+Pp <- nrow(Xp)
+
+
+```
+
+```{r}
+
+set.seed(3)
+D <- 5
+reddit.mds <- isoMDS(Xp**2, matrix(rnorm(D*Pp), Pp, D), k=D, maxit=5000, tol=1e-6)
+```
+
+```{r}
+
+for (i in 1:D) {
+for (j in (1:D)[-i]) {
+
+png(sprintf('plots/subreddit_%s_%s.png', i,j), 3000, 3000)
+plot(reddit.mds$points[,c(i,j)], pch='.', xlab=paste('D', i), ylab=paste('D', j))
+text(reddit.mds$points[,c(i,j)], rownames(reddit.mds$points), col=ifelse(noisolates == 'nfultz', 'green', 'black'))
+dev.off()
+
+}}
+```
+
+
+
+```{r}
+
+mds_ranks <- stack(as.data.frame(reddit.mds$points))
+mds_ranks$subreddit <- rownames(reddit.mds$points)
+mds_ranks$rank <- ave(-mds_ranks$values**2, mds_ranks$ind, FUN=rank)
+
+mds_ranks <- subset(mds_ranks, rank <= 10 | subreddit == 'nfultz', c(ind, subreddit, values))
+
+mds_ranks <- mds_ranks[order(mds_ranks$ind, mds_ranks$values),]
+
+
+by(mds_ranks, mds_ranks$ind, print, digits=3)
+
+```
+
+```{r}
+nearest <- as.matrix(dist(reddit.mds$points))[,c("nfultz", "LATIMESauto")] %*% matrix(c(1,1,1,-1), 2,2)
+
+png("plots/LATIMES.png", 1200, 1200)
+plot(nearest, pch='.')
+text(nearest, noisolates, font=.3)
+dev.off()
+
+```
+
+```{r}
+nearest <- as.matrix(dist(reddit.mds$points))[,c("nfultz", "LosAngeles")] %*% matrix(c(1,1,1,-1), 2,2)
+
+png("plots/LosAngeles.png", 1200, 1200)
+plot(nearest, pch='.')
+text(nearest, noisolates, font=.3)
+dev.off()
+
+```
+
+```{r}
+nearest <- as.matrix(dist(reddit.mds$points))[,c("nfultz", "dotfiles")] %*% matrix(c(1,1,1,-1), 2,2)
+
+png("plots/dotfiles.png", 1200, 1200)
+plot(nearest, pch='.')
+text(nearest, noisolates, font=.3)
+dev.off()
+
+```
+
+
+```{r}
+nearest <- as.matrix(dist(reddit.mds$points))[,c("nfultz", "statistics")] %*% matrix(c(1,1,1,-1), 2,2)
+
+png("plots/statistics", 1200, 1200)
+plot(nearest, pch='.')
+text(nearest, noisolates, font=.3)
+dev.off()
+
+```
