@@ -36,7 +36,7 @@ Concatenate chunks together correctly:
 
 Code:
 
-    jq -r '.data[].full_link ' data/2020-*.json  | sed 's/comments/duplicates/ ; s/\/$/.json/' > test
+    jq -r '.data[].full_link ' data/202*-*.json  | sed 's/comments/duplicates/ ; s/\/$/.json/' > test
     wc test
     cd duplicates/
     wget -i ../test --no-clobber --wait=6 --random-wait

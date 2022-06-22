@@ -4,7 +4,7 @@ URL="https://api.pushshift.io/reddit/search/submission/?sort=asc&subreddit=nfult
 
 test -n "$DEBUG"  || DEBUG=echo
 test -n "$MONTHS" || MONTHS=`seq -w 12`
-test -n "$YYYY"   || YYYY=2021
+test -n "$YYYY"   || YYYY=2022
 
 mkdir -p data
 
